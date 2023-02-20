@@ -43,7 +43,7 @@ public class ReproducerTest extends BottleRocketTest {
 
     @Test
     public void reproduce() {
-        datastore.getMapper().map(MyEntity.class, MyEnum.class);
+        //datastore.getMapper().map(MyEntity.class, MyEnum.class);
 
         MyEntity first = new MyEntity();
         datastore.save(first);
