@@ -7,8 +7,11 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import dev.morphia.Datastore;
 import dev.morphia.Morphia;
+import dev.morphia.mapping.MapperOptions;
+import dev.morphia.query.filters.Filters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class ReproducerTest extends BottleRocketTest {
@@ -18,7 +21,12 @@ public class ReproducerTest extends BottleRocketTest {
         MongoClient mongo = getMongoClient();
         MongoDatabase database = getDatabase();
         database.drop();
-        datastore = Morphia.createDatastore(mongo, getDatabase().getName());
+
+        MapperOptions options = MapperOptions.builder()
+            .codecProvider(new MyCustomCodecFactory())
+            .build();
+
+        datastore = Morphia.createDatastore(mongo, getDatabase().getName(), options);
     }
 
     @NotNull
@@ -35,6 +43,16 @@ public class ReproducerTest extends BottleRocketTest {
 
     @Test
     public void reproduce() {
+        datastore.getMapper().map(MyEntity.class, MyEnum.class);
+
+        MyEntity first = new MyEntity();
+        datastore.save(first);
+        
+        MyEntity second = datastore.find(MyEntity.class).filter(Filters.eq("_id", first.myId)).first();
+        
+        Assert.assertEquals(first, second);
+        Assert.assertTrue(MyCustomEnumCodec.g_wasEncodeCalled);
+        Assert.assertTrue(MyCustomEnumCodec.g_wasDecodeCalled);
     }
 
 }
